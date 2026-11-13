@@ -1,11 +1,14 @@
 import { useState } from 'react';
-import { beginExecute, describeCall, executeProblems, loadConnection, type WireCall } from '@kamui/sdk';
+import { beginExecute, describeCall, executeProblems, type WireCall } from '@kamui/sdk';
 import { uint256 } from 'starknet';
 import { FEATURES } from '../lib/features';
-import { APP_NAME, DEMO_ACCOUNT, LIVE_KEYCHAIN, STRK, TARGET, activeKeychainUrl, isDemoKeychain } from '../lib/config';
+import { APP_NAME, STRK, TARGET, activeKeychainUrl, isDemoKeychain } from '../lib/config';
+import { currentExecuteAccount } from '../lib/account';
 import { Button, Callout, Card, Output, Section } from '../components/ui';
 
 const feature = FEATURES.find((f) => f.id === 'execute')!;
+
+const ADD_OWNER_CALLDATA = ['0x2', '0x2', '0x3', '0x4'];
 
 function amount(value: bigint): string[] {
   const { low, high } = uint256.bnToUint256(value);
@@ -35,22 +38,16 @@ function describe(calls: WireCall[], account: string): string {
 
 export function OneOffExecute() {
   const [out, setOut] = useState('Inspect a one-off approval, or send it to the (demo) keychain.');
-  // Same identity the demo keychain uses in executeProblems, or the connected account for a hosted keychain.
-  const account =
-    (LIVE_KEYCHAIN && typeof sessionStorage !== 'undefined' && loadConnection(sessionStorage)?.account) || DEMO_ACCOUNT;
-
-  const approveCalls = [
-    { contractAddress: STRK, entrypoint: 'approve', calldata: [TARGET, ...amount(1_500_000_000_000_000_000n)] },
-  ];
-  const accountCall = [{ contractAddress: account, entrypoint: 'add_owner', calldata: ['0x2', '0x2', '0x3', '0x4'] }];
 
   function inspectApprove() {
+    const account = currentExecuteAccount();
     const wire: WireCall[] = [{ to: STRK, entrypoint: 'approve', calldata: [TARGET, ...amount(1_500_000_000_000_000_000n)] }];
     setOut(describe(wire, account) + '\n\nThe approval screen would then name this “1.5 STRK” — see Token amounts.');
   }
 
   function inspectForbidden() {
-    const wire: WireCall[] = [{ to: account, entrypoint: 'add_owner', calldata: ['0x2', '0x2', '0x3', '0x4'] }];
+    const account = currentExecuteAccount();
+    const wire: WireCall[] = [{ to: account, entrypoint: 'add_owner', calldata: ADD_OWNER_CALLDATA }];
     setOut(
       describe(wire, account) +
         '\n\nDevice keys, sessions and spending limits are only ever changed from the keychain’s own pages, never at a site’s request.',
@@ -63,6 +60,16 @@ export function OneOffExecute() {
       sessionStorage,
     );
     window.location.assign(url);
+  }
+
+  function goApprove() {
+    go([{ contractAddress: STRK, entrypoint: 'approve', calldata: [TARGET, ...amount(1_500_000_000_000_000_000n)] }]);
+  }
+
+  function goAddOwner() {
+    // Resolve at click time so a hosted connect or disconnect is not stale.
+    const account = currentExecuteAccount();
+    go([{ contractAddress: account, entrypoint: 'add_owner', calldata: ADD_OWNER_CALLDATA }]);
   }
 
   return (
@@ -78,8 +85,8 @@ export function OneOffExecute() {
             Inspect approve 1.5 STRK
           </Button>
           <Button onClick={inspectForbidden}>Inspect a call to the account itself</Button>
-          <Button onClick={() => go(approveCalls)}>Ask the keychain to approve 1.5 STRK</Button>
-          <Button onClick={() => go(accountCall)}>Ask it to add an owner (should be refused)</Button>
+          <Button onClick={goApprove}>Ask the keychain to approve 1.5 STRK</Button>
+          <Button onClick={goAddOwner}>Ask it to add an owner (should be refused)</Button>
         </div>
         <Output>{out}</Output>
       </Card>

@@ -14,6 +14,13 @@ export function parseNonNegativeInt(text: string, field: string): bigint {
   return value;
 }
 
+/** A non-negative felt (token address, account, …) as decimal or 0x-hex text. Returns the trimmed input. */
+export function parseFelt(text: string, field: string): string {
+  const trimmed = text.trim();
+  parseNonNegativeInt(trimmed, field);
+  return trimmed;
+}
+
 /** A positive JavaScript integer (for window lengths, maxCalls, and similar). */
 export function parsePositiveNumber(value: string | number, field: string): number {
   const n = typeof value === 'number' ? value : Number(String(value).trim());
