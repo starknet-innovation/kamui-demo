@@ -84,13 +84,7 @@ exercised end-to-end against Sepolia from this frontend alone:
 
 ## Deployment
 
-The GitHub Actions workflow for Pages is in
-[`docs/github-workflows/pages.yml`](docs/github-workflows/pages.yml) (CI is next to it).
-These files belong in `.github/workflows/`. They are documented here rather than installed
-there because the token used to open this PR has the `repo` scope but not the `workflow`
-scope, and GitHub refuses to create or update workflow files without it. Copy both YAML
-files into `.github/workflows/` (or push that change with a token that has `workflow`
-scope) and then:
+The GitHub Actions workflows are in [`.github/workflows/`](.github/workflows/).
 
 After this is merged to `main`:
 
