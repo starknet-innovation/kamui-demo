@@ -32,12 +32,32 @@ export type ReturnResult = {
 };
 
 /**
+ * Last result from this page load. React StrictMode remounts WalletProvider and
+ * replays the effect; the first call already consumed the fragment and pending
+ * request, so a second call would otherwise return an empty message.
+ */
+let lastReturn: ReturnResult | undefined;
+
+/** For tests: allow a fresh consume after a previous one in the same module lifetime. */
+export function resetKeychainReturnCache(): void {
+  lastReturn = undefined;
+}
+
+/**
  * Consume a keychain answer in the URL fragment (connect or execute) and
- * return the current connection. Safe to call once on app load.
+ * return the current connection. Safe to call more than once on the same load
+ * (StrictMode): a replay with no new fragment returns the first result.
  */
 export function consumeKeychainReturn(store: Storage = sessionStorage): ReturnResult {
   const hash = typeof window !== 'undefined' ? window.location.hash : '';
   const hadKamui = hash.includes('kamui=');
+  if (!hadKamui && lastReturn !== undefined) return lastReturn;
+  const result = readKeychainReturn(store, hash, hadKamui);
+  lastReturn = result;
+  return result;
+}
+
+function readKeychainReturn(store: Storage, hash: string, hadKamui: boolean): ReturnResult {
   try {
     if (pendingRequestKind(store) === 'execute') {
       try {

@@ -9,12 +9,16 @@ import {
   LIVE_SPONSOR,
   SPONSOR_URL,
   activeKeychainUrl,
+  apiUrlForSponsorFallback,
   connectRedirectUri,
   isDemoKeychain,
   preferDemoKeychain,
   setPreferDemoKeychain,
+  DEMO_ACCOUNT,
 } from '../src/lib/config';
-import { consumeKeychainReturn } from '../src/lib/connect';
+import { consumeKeychainReturn, resetKeychainReturnCache } from '../src/lib/connect';
+import { resolveSponsorUrl } from '../src/lib/parse';
+import { currentExecuteAccount } from '../src/lib/account';
 
 describe('hosted keychain defaults', () => {
   it('points KEYCHAIN_URL and API_URL at sepolia.kamui.page', () => {
@@ -89,6 +93,7 @@ describe('beginConnect URL', () => {
 
 describe('consumeKeychainReturn', () => {
   beforeEach(() => {
+    resetKeychainReturnCache();
     sessionStorage.clear();
     window.history.replaceState(null, '', '/');
   });
@@ -136,5 +141,118 @@ describe('consumeKeychainReturn', () => {
     expect(result.tone).toBe('ok');
     expect(result.message).toMatch(/approved the session/);
     expect(window.location.hash).not.toMatch(/kamui=/);
+  });
+
+  it('keeps the first return message when consume is replayed after the fragment is cleared (StrictMode)', () => {
+    beginConnect(
+      {
+        keychainUrl: 'https://sepolia.kamui.page',
+        redirectUri: 'http://localhost:5175/',
+        appName: 'Kamui demo',
+        validUntil: 2_000_000_000,
+        maxCalls: 20,
+        calls: [{ to: '0x1', entrypoint: 'ping' }],
+      },
+      sessionStorage,
+    );
+    const pending = JSON.parse(sessionStorage.getItem('kamui.pending')!);
+    const answer = toFragment({
+      v: 1,
+      id: pending.id,
+      ok: true,
+      account: '0x123',
+      chainId: '0x534e5f5345504f4c4941',
+      classHash: '0xabc',
+    } as never);
+    window.history.replaceState(null, '', '/' + answer);
+    const first = consumeKeychainReturn(sessionStorage);
+    expect(first.message).toMatch(/approved the session/);
+    expect(window.location.hash).not.toMatch(/kamui=/);
+    const second = consumeKeychainReturn(sessionStorage);
+    expect(second.message).toBe(first.message);
+    expect(second.tone).toBe(first.tone);
+    expect(second.connection?.account).toBe('0x123');
+  });
+
+  it('keeps a refusal message on replay when there is no saved connection', () => {
+    beginConnect(
+      {
+        keychainUrl: 'https://sepolia.kamui.page',
+        redirectUri: 'http://localhost:5175/',
+        appName: 'Kamui demo',
+        validUntil: 2_000_000_000,
+        maxCalls: 20,
+        calls: [{ to: '0x1', entrypoint: 'ping' }],
+      },
+      sessionStorage,
+    );
+    const pending = JSON.parse(sessionStorage.getItem('kamui.pending')!);
+    const answer = toFragment({
+      v: 1,
+      id: pending.id,
+      ok: false,
+      error: 'refused',
+    } as never);
+    window.history.replaceState(null, '', '/' + answer);
+    const first = consumeKeychainReturn(sessionStorage);
+    expect(first.connection).toBeNull();
+    expect(first.tone).toBe('bad');
+    expect(first.message).toMatch(/Not connected:.*refused/);
+    const second = consumeKeychainReturn(sessionStorage);
+    expect(second.message).toBe(first.message);
+    expect(second.tone).toBe('bad');
+    expect(second.connection).toBeNull();
+  });
+});
+
+describe('apiUrlForSponsorFallback', () => {
+  it('treats the hosted keychain host with a trailing slash as having no sponsor', () => {
+    expect(apiUrlForSponsorFallback('https://sepolia.kamui.page/', 'https://sepolia.kamui.page')).toBe('');
+    expect(apiUrlForSponsorFallback('https://sepolia.kamui.page', 'https://sepolia.kamui.page')).toBe('');
+    expect(apiUrlForSponsorFallback('https://sepolia.kamui.page///', DEFAULT_API_URL)).toBe('');
+    expect(resolveSponsorUrl('', apiUrlForSponsorFallback('https://sepolia.kamui.page/'))).toBe('');
+  });
+
+  it('still falls back to {API}/sponsor for a real API host', () => {
+    expect(apiUrlForSponsorFallback('https://api.example', DEFAULT_API_URL)).toBe('https://api.example');
+    expect(resolveSponsorUrl('', apiUrlForSponsorFallback('https://api.example/'))).toBe('https://api.example/sponsor');
+  });
+});
+
+describe('currentExecuteAccount in demo-keychain mode', () => {
+  const hosted = '0xabc000000000000000000000000000000000000000000000000000000000001';
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    setPreferDemoKeychain(false);
+  });
+
+  it('uses a stored hosted account when the hosted keychain is active', () => {
+    sessionStorage.setItem(
+      'kamui.connection',
+      JSON.stringify({
+        account: hosted,
+        chainId: '0x1',
+        classHash: '0x2',
+        session: { privateKey: '0x3', publicKey: '0x4', validUntil: 2_000_000_000, maxCalls: 20 },
+      }),
+    );
+    expect(currentExecuteAccount()).toBe(hosted);
+  });
+
+  it('uses DEMO_ACCOUNT when the demo keychain is preferred, even if a hosted connection remains', () => {
+    sessionStorage.setItem(
+      'kamui.connection',
+      JSON.stringify({
+        account: hosted,
+        chainId: '0x1',
+        classHash: '0x2',
+        session: { privateKey: '0x3', publicKey: '0x4', validUntil: 2_000_000_000, maxCalls: 20 },
+      }),
+    );
+    setPreferDemoKeychain(true);
+    expect(currentExecuteAccount()).toBe(DEMO_ACCOUNT);
+    setPreferDemoKeychain(false);
+    expect(currentExecuteAccount()).toBe(hosted);
   });
 });

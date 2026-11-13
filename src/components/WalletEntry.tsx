@@ -171,6 +171,7 @@ export function WalletEntry({ variant = 'hero' }: { variant?: 'hero' | 'section'
           </label>
         </>
       ) : null}
+      {message ? <p className={`wallet-status-msg ${tone}`}>{message}</p> : null}
       {error ? <p className="wallet-entry-error">{error}</p> : null}
     </div>
   );

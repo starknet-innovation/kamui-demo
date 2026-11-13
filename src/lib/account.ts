@@ -1,6 +1,6 @@
 /** Current account for one-off execute inspection and account-targeted calls. */
 import { loadConnection } from '@kamui/sdk';
-import { DEMO_ACCOUNT } from './config';
+import { DEMO_ACCOUNT, isDemoKeychain } from './config';
 
 /**
  * The account identity execute inspection and add-owner requests should use.
@@ -21,6 +21,7 @@ export function resolveExecuteAccount(
 export function currentExecuteAccount(): string {
   const connected =
     typeof sessionStorage !== 'undefined' ? loadConnection(sessionStorage)?.account : undefined;
-  // Use a stored connection whenever one exists (hosted or leftover), else the demo account.
-  return resolveExecuteAccount(Boolean(connected?.trim()), connected);
+  // Demo-keychain mode (empty VITE_KEYCHAIN_URL, or the fallback toggle) always
+  // uses DEMO_ACCOUNT, even if a leftover hosted connection is still in the tab.
+  return resolveExecuteAccount(!isDemoKeychain(), connected);
 }

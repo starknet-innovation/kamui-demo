@@ -53,10 +53,16 @@ export const GOOGLE_CLIENT_ID =
  * `{API_URL}/sponsor` when API_URL is the hosted keychain itself: that host has
  * no /sponsor, and a static Pages site cannot inject the private sponsor token
  * that apps/demo-dapp's server.ts sends as x-kamui-sponsor-token.
+ * Compare without a trailing slash so `VITE_API_URL=https://sepolia.kamui.page/`
+ * does not fall through and flip LIVE_SPONSOR on for a 404 endpoint.
  */
+export function apiUrlForSponsorFallback(apiUrl: string, defaultApi: string = DEFAULT_API_URL): string {
+  return apiUrl.replace(/\/+$/, '') === defaultApi.replace(/\/+$/, '') ? '' : apiUrl;
+}
+
 export const SPONSOR_URL = resolveSponsorUrl(
   (import.meta.env.VITE_SPONSOR_URL as string | undefined) ?? '',
-  API_URL === DEFAULT_API_URL ? '' : API_URL,
+  apiUrlForSponsorFallback(API_URL),
 );
 
 export const LIVE_KEYCHAIN = KEYCHAIN_URL.length > 0;
