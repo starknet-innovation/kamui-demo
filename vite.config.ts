@@ -4,12 +4,11 @@ import { fileURLToPath, URL } from 'node:url';
 import { resolveViteBase } from './src/lib/basePath';
 
 // Base path for assets and import.meta.env.BASE_URL (keychain redirects).
-// Defaults to "/" so private GitHub Pages at the site root, local dev, and CI
-// all work. The Pages workflow should pass actions/configure-pages's
-// base_path as VITE_BASE_PATH so a future public project site at
-// /kamui-demo/ is picked up automatically.
+// VITE_BASE_PATH wins if set (e.g. actions/configure-pages base_path).
+// Otherwise GITHUB_PAGES=1 — which the current Pages workflow already sets —
+// uses /kamui-demo/ for the public project site. Local dev and CI stay at /.
 export default defineConfig({
-  base: resolveViteBase(process.env.VITE_BASE_PATH),
+  base: resolveViteBase(process.env.VITE_BASE_PATH, process.env.GITHUB_PAGES),
   plugins: [react()],
   resolve: {
     alias: {

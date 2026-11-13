@@ -87,20 +87,16 @@ exercised end-to-end against Sepolia from this frontend alone:
 The GitHub Actions workflows are in [`.github/workflows/`](.github/workflows/). Pages is
 enabled with **Source** set to **GitHub Actions**, and deploys from `main`.
 
-This repository is **internal**, so GitHub serves the site privately at the root of a
-unique `*.pages.github.io` host, currently
-[https://legendary-adventure-2my9wyv.pages.github.io/](https://legendary-adventure-2my9wyv.pages.github.io/).
-Only members of the `starknet-innovation` organisation can see it.
+This repository is **public**. GitHub Pages serves the site at
+[https://starknet-innovation.github.io/kamui-demo/](https://starknet-innovation.github.io/kamui-demo/).
 
-The Vite `base` path is taken from the `VITE_BASE_PATH` environment variable and defaults
-to `/`, which matches that private-root URL (and local dev). Keychain redirects and the
-SPA `404.html` fallback use Vite’s `import.meta.env.BASE_URL`, so they follow the same
-value.
+The Vite `base` path is taken from `VITE_BASE_PATH` if that is set, otherwise from
+`GITHUB_PAGES=1` (which the current Pages workflow already sets) as `/kamui-demo/`,
+and otherwise `/` for local dev and CI. Keychain redirects and the SPA `404.html`
+fallback use Vite’s `import.meta.env.BASE_URL`, so they follow the same value.
 
-If the repository is made public, GitHub typically serves project Pages at
-`https://starknet-innovation.github.io/kamui-demo/`. To pick the correct base up
-automatically, the Pages workflow should pass `actions/configure-pages`’s `base_path`
-into the build:
+Optionally, the Pages workflow can pass `actions/configure-pages`’s `base_path`
+into the build instead of relying on `GITHUB_PAGES=1`:
 
 ```yaml
 - id: pages
@@ -110,8 +106,8 @@ into the build:
     VITE_BASE_PATH: ${{ steps.pages.outputs.base_path }}
 ```
 
-Replace the current `GITHUB_PAGES=1 bun run build` step with that. Until then, the
-default `/` is the right base for the private site.
+That is not required for the public project-site URL: `GITHUB_PAGES=1 bun run build`
+already produces the `/kamui-demo/` base.
 
 No secrets are required for the static deploy. Enabling live login, a hosted keychain, or
 sponsored transactions later means setting the public `VITE_*` values at build time (never
