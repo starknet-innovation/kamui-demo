@@ -41,7 +41,7 @@ export function Overview() {
         </Card>
         <Card title="Live services">
           <p>Hosted keychain: {LIVE_KEYCHAIN ? 'configured' : 'not configured — using the in-app demo keychain'}.</p>
-          <p>Google login: explainer only. This demo does not persist a login attempt or handle a callback, so it will not complete a real sign-in.</p>
+          <p>Google login: real SDK flow (<code>beginLogin</code> → Google → <code>/callback</code>). Pepper and completeLogin are attempted when those services accept this origin; they are not faked.</p>
         </Card>
         <Card title="Not Argent or Braavos">
           <p>

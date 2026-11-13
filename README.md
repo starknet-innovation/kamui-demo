@@ -28,9 +28,10 @@ bun run preview      # http://localhost:4173
 ```
 
 Optional public environment (see `.env.example`): `VITE_RPC_URL` defaults to a public Sepolia
-RPC. Live Google login, a hosted keychain, and sponsored pings need additional `VITE_*` values
-pointing at a deployed Kamui stack — those services are not public yet
-(`https://sepolia.kamui.page` is the planned origin, not a live URL).
+RPC. A public Google OAuth client ID is baked in (override with `VITE_GOOGLE_CLIENT_ID`).
+The pepper service at `https://pepper-sepolia.kamui.page` is live but origin-allowlisted.
+`https://sepolia.kamui.page` serves a keychain; the recover API at
+`https://api-sepolia.kamui.page` was not reachable when this was written.
 
 The SDK is vendored from `starknet-innovation/kamui` at commit
 `a6e491c2a115ce5489ffbd6a45d93f3c1840afea` under `vendor/kamui-sdk/` (MIT). Import is
@@ -41,7 +42,7 @@ source-only, matching the upstream package.
 | Feature | Where it is demonstrated | What the playground does |
 |---|---|---|
 | What Kamui is | [Overview](#overview) | Product framing, current Sepolia/Google scope, why this is not Argent or Braavos |
-| Social login | [Social login](#social-login) | `beginLogin`, `loginNonce`, `keyProof`, `authUrl` (Google). Live redirect needs a client id, pepper service and API |
+| Social login | [Social login](#social-login) | Real Google sign-in: `beginLogin`, `authUrl`, `/callback` (`parseLoginRedirect`, nonce/state, `keyProof`). Pepper and `completeLogin` when those services allow this origin |
 | Pepper recovery file | [Pepper file](#pepper) | `exportPepper`, `serializePepperFile`, `parsePepperFile`, `pepperFileMatchesLogin`, `pepperFromFile` |
 | Deterministic address | [Account address](#address) | `identity`, `accountAddress`, `accountAddressFromLogin`, `constructorCalldata`, `NO_PEPPER` |
 | Keychain connect | [Keychain connect](#keychain) | `beginConnect` / `finishConnect` against the in-app demo keychain (or `VITE_KEYCHAIN_URL`) |
@@ -71,7 +72,7 @@ exercised end-to-end against Sepolia from this frontend alone:
 
 | Feature | Why |
 |---|---|
-| Live Google sign-in, pepper fetch, deploy and recover | Needs `VITE_GOOGLE_CLIENT_ID`, a running pepper service (`VITE_PEPPER_URL`) with a KMS key, a recover API (`VITE_API_URL`), and a funded relayer. The planned `https://sepolia.kamui.page` / `https://pepper-sepolia.kamui.page` are not deployed. |
+| Pepper fetch, deploy and recover after Google sign-in | Google sign-in itself is wired (baked-in client ID, sessionStorage across the redirect, `/callback`). The pepper service at `https://pepper-sepolia.kamui.page` is live (`GET /health` returns ok) but refuses this demo’s origin (`ORIGIN_NOT_ALLOWED`). The recover API (`https://api-sepolia.kamui.page`) did not complete a TLS handshake. `completeLogin` is not called without a real pepper and API; nothing is faked. |
 | Live session registration and sponsored `ping()` | Needs the hosted keychain plus a sponsor gateway with a funded policy (`VITE_KEYCHAIN_URL`, `VITE_SPONSOR_URL`). Approved-app sponsorship also needs a **server-side** token, which must never be baked into this static site. |
 | Self-paid session transactions | Needs a session with `maxFeePerTx > 0` registered on chain and an account funded with test STRK. |
 | Client-side SNIP-36 proving in this page | The Wasm runtime lives in the Kamui keychain (large assets, desktop Chromium memory64, tens of seconds). First-deployment and hosted-origin acceptance are still pending upstream. |
@@ -92,8 +93,10 @@ This repository is **public**. GitHub Pages serves the site at
 
 The Vite `base` path is taken from `VITE_BASE_PATH` if that is set, otherwise from
 `GITHUB_PAGES=1` (which the current Pages workflow already sets) as `/kamui-demo/`,
-and otherwise `/` for local dev and CI. Keychain redirects and the SPA `404.html`
-fallback use Vite’s `import.meta.env.BASE_URL`, so they follow the same value.
+and otherwise `/` for local dev and CI. Keychain redirects, the Google login callback at
+`/kamui-demo/callback`, and the SPA `404.html` fallback use Vite’s `import.meta.env.BASE_URL`,
+so they follow the same value. GitHub Pages serves unknown paths such as `/kamui-demo/callback`
+with that `404.html` copy of `index.html`, and the app routes on the pathname.
 
 Optionally, the Pages workflow can pass `actions/configure-pages`’s `base_path`
 into the build instead of relying on `GITHUB_PAGES=1`:

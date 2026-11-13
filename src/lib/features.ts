@@ -21,8 +21,8 @@ export const FEATURES: Feature[] = [
     id: 'social-login',
     title: 'Social login',
     nav: 'Social login',
-    blurb: 'Google sign-in to a device key that owns a Kamui account: beginLogin, the issuer redirect, pepper with a key proof, and completeLogin.',
-    badges: ['sdk', 'sim'],
+    blurb: 'Real Google sign-in via beginLogin, authUrl and a /callback that runs parseLoginRedirect and keyProof. Pepper and completeLogin follow when those services allow this origin.',
+    badges: ['sdk'],
   },
   {
     id: 'pepper',
