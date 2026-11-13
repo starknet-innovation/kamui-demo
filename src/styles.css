@@ -318,3 +318,80 @@ table.data td.mono { font-family: var(--mono); font-size: 12.5px; word-break: br
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* Prominent Google wallet entry in the hero, and compact status in the nav. */
+.wallet-entry-hero {
+  margin: 0 0 22px;
+  max-width: 42rem;
+}
+.wallet-entry-hero .wallet-entry-lead {
+  margin: 0 0 12px;
+  font-size: 16px;
+  color: var(--paper);
+}
+.wallet-entry-hero .actions .btn.primary {
+  padding: 12px 22px;
+  font-size: 16px;
+  border-radius: 10px;
+}
+.wallet-entry-note, .wallet-status-account {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--paper-dim);
+  max-width: 42rem;
+}
+.wallet-entry-error { margin: 8px 0 0; color: var(--bad); font-size: 13px; }
+.wallet-status {
+  margin: 0 0 22px;
+  padding: 16px 18px;
+  border: 1px solid rgba(125, 174, 136, 0.35);
+  background: rgba(125, 174, 136, 0.08);
+  border-radius: 12px;
+  max-width: 42rem;
+}
+.wallet-status-who { display: flex; flex-direction: column; gap: 2px; }
+.wallet-status-who strong { color: var(--ok); font-size: 15px; }
+.wallet-status-who span, .wallet-status-sub {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--paper);
+  word-break: break-all;
+}
+.wallet-status-sub { margin-top: 4px; color: var(--paper-dim); }
+.wallet-status-account { margin-top: 10px; }
+.wallet-status .actions { margin-top: 12px; }
+.wallet-status-nav, .nav-wallet {
+  margin: 10px 0 14px;
+}
+.nav-wallet .btn, .nav-wallet-btn {
+  width: 100%;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+.wallet-status-nav {
+  padding: 10px 10px;
+  margin: 0;
+  max-width: none;
+}
+.wallet-status-nav .wallet-status-who strong { font-size: 12px; }
+.wallet-status-nav .wallet-status-who span { font-size: 11px; }
+.wallet-status-nav .wallet-status-account,
+.wallet-status-nav .wallet-status-sub,
+.wallet-status-nav .actions { display: none; }
+
+.wallet-demo-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--paper-dim);
+  cursor: pointer;
+  max-width: 36rem;
+}
+.wallet-demo-toggle input { margin-top: 3px; }
+.wallet-status-session { font-size: 13px; color: var(--paper-dim); margin: 8px 0 0; word-break: break-all; }
+.wallet-status-msg { font-size: 13px; margin-top: 8px; }
+.wallet-status-msg.ok { color: var(--ok); }
+.wallet-status-msg.bad { color: var(--bad); }

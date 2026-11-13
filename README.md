@@ -7,9 +7,13 @@ and spending policies, sponsored and self-paid calls, owners, the session regist
 the account reader, SNIP-9 outside execution, client-side proving, and the security model.
 
 Each section has a short explanation and a playground that runs the **real Kamui SDK** in the
-browser. Two sections also read Starknet Sepolia (token metadata and `KamuiReader`). When no
-hosted keychain is configured, an in-app **demo keychain** walks through `/connect` and
-`/execute` with the real protocol checks; it does not submit a transaction.
+browser. Two sections also read Starknet Sepolia (token metadata and `KamuiReader`).
+
+**Connect with Kamui (Google)** in the header sends you to the hosted keychain at
+`https://sepolia.kamui.page` (`beginConnect` / `finishConnect`). Google sign-in, pepper and
+recovery happen on that site; this demo receives a scoped session key and shows the connected
+account. An in-app **demo keychain** is available as a fallback toggle (real protocol checks,
+simulated approval, no on-chain session).
 
 This is a Sepolia demo. Kamui is **not audited**. Do not hold real funds.
 
@@ -28,10 +32,14 @@ bun run preview      # http://localhost:4173
 ```
 
 Optional public environment (see `.env.example`): `VITE_RPC_URL` defaults to a public Sepolia
-RPC. A public Google OAuth client ID is baked in (override with `VITE_GOOGLE_CLIENT_ID`).
-The pepper service at `https://pepper-sepolia.kamui.page` is live but origin-allowlisted.
-`https://sepolia.kamui.page` serves a keychain; the recover API at
-`https://api-sepolia.kamui.page` was not reachable when this was written.
+RPC. `VITE_KEYCHAIN_URL` and `VITE_API_URL` default to `https://sepolia.kamui.page`. Set either
+to empty, or use the header toggle, to fall back to the in-app demo keychain.
+
+The pepper service at `https://pepper-sepolia.kamui.page` is live and origin-allowlisted.
+Direct calls from *this demo’s* origin are refused (`ORIGIN_NOT_ALLOWED`); the hosted
+keychain’s origin is already allowed, which is why Connect does not need this demo to be
+pepper-allowlisted. `https://api-sepolia.kamui.page` was not reachable (TLS) when this was
+written; the keychain talks to its own `/api` instead.
 
 The SDK is vendored from `starknet-innovation/kamui` at commit
 `a6e491c2a115ce5489ffbd6a45d93f3c1840afea` under `vendor/kamui-sdk/` (MIT). Import is
@@ -42,13 +50,13 @@ source-only, matching the upstream package.
 | Feature | Where it is demonstrated | What the playground does |
 |---|---|---|
 | What Kamui is | [Overview](#overview) | Product framing, current Sepolia/Google scope, why this is not Argent or Braavos |
-| Social login | [Social login](#social-login) | Real Google sign-in: `beginLogin`, `authUrl`, `/callback` (`parseLoginRedirect`, nonce/state, `keyProof`). Pepper and `completeLogin` when those services allow this origin |
+| Social login | [Social login](#social-login) | Explainer of what the hosted keychain does after Connect: Google sign-in, pepper and recovery stay on `sepolia.kamui.page`. This demo never receives a Google token |
 | Pepper recovery file | [Pepper file](#pepper) | `exportPepper`, `serializePepperFile`, `parsePepperFile`, `pepperFileMatchesLogin`, `pepperFromFile` |
 | Deterministic address | [Account address](#address) | `identity`, `accountAddress`, `accountAddressFromLogin`, `constructorCalldata`, `NO_PEPPER` |
-| Keychain connect | [Keychain connect](#keychain) | `beginConnect` / `finishConnect` against the in-app demo keychain (or `VITE_KEYCHAIN_URL`) |
+| Keychain connect | [Keychain connect](#keychain) | `beginConnect` / `finishConnect` against `https://sepolia.kamui.page` by default; in-app demo keychain as a fallback toggle |
 | Session scopes | [Session scopes](#sessions) | Scope builder run through `assertValidSession` and `sessionProblems`; blocked entry points |
 | Spending policies | [Spending policies](#spending) | `unlimitedTokenCalls` and SNIP-41 Part H limits |
-| Sponsored session calls | [Sponsored calls](#sponsored) | `sessionCall` + `sponsor` against the Sepolia Target `ping()` contract, when a sponsor URL is set |
+| Sponsored session calls | [Sponsored calls](#sponsored) | `sessionCall` + `sponsor` against the Sepolia Target `ping()`. Labeled, not live, on this static site: sending needs a server that injects a private sponsor token (see `apps/demo-dapp/server.ts`) |
 | Out-of-scope refusal | [Out-of-scope](#out-of-scope) | A ping-only session vs. an unlimited `transfer`, via `sessionProblems` |
 | One-off execute | [One-off execute](#execute) | `describeCall`, `executeProblems`, `beginExecute` (approve 1.5 STRK; a call to the account is refused) |
 | Token amounts | [Token amounts](#tokens) | `formatTokenAmount`, `describeAmount`, `isUnlimitedAmount`; live `readTokenInfo` on Sepolia for STRK, ETH and the Target contract |
@@ -72,8 +80,8 @@ exercised end-to-end against Sepolia from this frontend alone:
 
 | Feature | Why |
 |---|---|
-| Pepper fetch, deploy and recover after Google sign-in | Google sign-in itself is wired (baked-in client ID, sessionStorage across the redirect, `/callback`). The pepper service at `https://pepper-sepolia.kamui.page` is live (`GET /health` returns ok) but refuses this demo’s origin (`ORIGIN_NOT_ALLOWED`). The recover API (`https://api-sepolia.kamui.page`) did not complete a TLS handshake. `completeLogin` is not called without a real pepper and API; nothing is faked. |
-| Live session registration and sponsored `ping()` | Needs the hosted keychain plus a sponsor gateway with a funded policy (`VITE_KEYCHAIN_URL`, `VITE_SPONSOR_URL`). Approved-app sponsorship also needs a **server-side** token, which must never be baked into this static site. |
+| Pepper fetch, deploy and recover *from this origin* | These run on the hosted keychain when you Connect, not in this demo. Direct calls from this origin to `https://pepper-sepolia.kamui.page` are still refused (`ORIGIN_NOT_ALLOWED`); `https://api-sepolia.kamui.page` still failed a TLS handshake when last checked. Neither blocks Connect. |
+| Sponsored `ping()` (session registration itself is live via Connect) | After Connect, the session is registered on chain by the keychain. Sending a sponsored call still needs a **server-side** `SPONSOR_SERVER_TOKEN`, injected the way kamui’s `apps/demo-dapp/server.ts` does on `/api/sponsor`. A static GitHub Pages site cannot hold that token, and `https://sepolia.kamui.page/sponsor` is not a public gateway (404). Set `VITE_SPONSOR_URL` to your own proxy to enable the send. One-off execute still works: the keychain submits that transaction itself. |
 | Self-paid session transactions | Needs a session with `maxFeePerTx > 0` registered on chain and an account funded with test STRK. |
 | Client-side SNIP-36 proving in this page | The Wasm runtime lives in the Kamui keychain (large assets, desktop Chromium memory64, tens of seconds). First-deployment and hosted-origin acceptance are still pending upstream. |
 | Apple sign-in | Implemented in the SDK, deferred in the current Google-only rollout. |
@@ -93,10 +101,10 @@ This repository is **public**. GitHub Pages serves the site at
 
 The Vite `base` path is taken from `VITE_BASE_PATH` if that is set, otherwise from
 `GITHUB_PAGES=1` (which the current Pages workflow already sets) as `/kamui-demo/`,
-and otherwise `/` for local dev and CI. Keychain redirects, the Google login callback at
-`/kamui-demo/callback`, and the SPA `404.html` fallback use Vite’s `import.meta.env.BASE_URL`,
-so they follow the same value. GitHub Pages serves unknown paths such as `/kamui-demo/callback`
-with that `404.html` copy of `index.html`, and the app routes on the pathname.
+and otherwise `/` for local dev and CI. The keychain `redirectUri` is this site’s base
+(`https://starknet-innovation.github.io/kamui-demo/` on Pages, `http://localhost:5175/` locally).
+The answer comes back in the URL fragment (`#kamui=…`); `finishConnect` runs on load. The SPA
+`404.html` fallback uses Vite’s `import.meta.env.BASE_URL`.
 
 Optionally, the Pages workflow can pass `actions/configure-pages`’s `base_path`
 into the build instead of relying on `GITHUB_PAGES=1`:
@@ -112,10 +120,10 @@ into the build instead of relying on `GITHUB_PAGES=1`:
 That is not required for the public project-site URL: `GITHUB_PAGES=1 bun run build`
 already produces the `/kamui-demo/` base.
 
-No secrets are required for the static deploy. Enabling live login, a hosted keychain, or
-sponsored transactions later means setting the public `VITE_*` values at build time (never
-relayer keys, sponsor tokens, or KMS credentials — those belong on the Kamui backend, and an
-approved-app sponsor token must be injected by a server you control, not by this static app).
+No secrets are required for the static deploy. The hosted keychain is the default. Sponsored
+transactions need a server you control (never bake relayer keys, sponsor tokens, or KMS
+credentials into this frontend). The reference is kamui’s `apps/demo-dapp/server.ts`, which
+proxies `/api/sponsor` and sets `x-kamui-sponsor-token`.
 
 ## Stack
 

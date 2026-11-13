@@ -1,5 +1,6 @@
 import { FEATURES } from '../lib/features';
 import { Seal } from './ui';
+import { WalletEntry } from './WalletEntry';
 
 export function Nav({ current }: { current: string }) {
   return (
@@ -11,6 +12,9 @@ export function Nav({ current }: { current: string }) {
           <span>Feature demo</span>
         </div>
       </a>
+      <div className="nav-wallet">
+        <WalletEntry variant="nav" />
+      </div>
       <div className="nav-kicker">Features</div>
       {FEATURES.map((f) => (
         <a key={f.id} href={`#${f.id}`} className={`item ${current === f.id ? 'active' : ''}`}>

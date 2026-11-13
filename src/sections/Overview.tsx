@@ -25,8 +25,8 @@ export function Overview() {
           <p>
             Every user-facing feature of the Kamui SDK and keychain protocol has a section below, with a short
             explanation and an interactive playground that runs the real SDK in the browser. Two sections also
-            read Starknet Sepolia. A built-in <em>demo keychain</em> walks through connect and execute when no
-            hosted keychain is configured.
+            read Starknet Sepolia. Connect uses the hosted keychain at <code>https://sepolia.kamui.page</code>
+            by default; a header toggle falls back to the in-app demo keychain (simulated approval only).
           </p>
         </Card>
       </div>
@@ -40,8 +40,8 @@ export function Overview() {
           <p>RPC: <code>{RPC_URL}</code></p>
         </Card>
         <Card title="Live services">
-          <p>Hosted keychain: {LIVE_KEYCHAIN ? 'configured' : 'not configured — using the in-app demo keychain'}.</p>
-          <p>Google login: real SDK flow (<code>beginLogin</code> → Google → <code>/callback</code>). Pepper and completeLogin are attempted when those services accept this origin; they are not faked.</p>
+          <p>Hosted keychain: {LIVE_KEYCHAIN ? 'https://sepolia.kamui.page (default)' : 'not configured — using the in-app demo keychain'}.</p>
+          <p>Google sign-in, pepper and recovery run on the keychain, not in this app. Sponsored pings need a server-side sponsor token this static site cannot hold.</p>
         </Card>
         <Card title="Not Argent or Braavos">
           <p>

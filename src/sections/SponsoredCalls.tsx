@@ -8,7 +8,7 @@ import { Button, Callout, Card, Output, Section } from '../components/ui';
 const feature = FEATURES.find((f) => f.id === 'sponsored')!;
 
 export function SponsoredCalls() {
-  const [log, setLog] = useState('Connect in the Keychain section first, then ping.');
+  const [log, setLog] = useState('Connect with Kamui first, then prepare a ping. Sending it needs a sponsor server.');
   const [tone, setTone] = useState<'ok' | 'bad' | undefined>();
   const [busy, setBusy] = useState(false);
   const connection = typeof sessionStorage === 'undefined' ? null : loadConnection(sessionStorage);
@@ -17,7 +17,7 @@ export function SponsoredCalls() {
     const conn = loadConnection(sessionStorage);
     if (!conn) {
       setTone('bad');
-      setLog('No connection. Approve a session in “Keychain connect” first.');
+      setLog('No connection. Use “Connect with Kamui (Google)” in the header first.');
       return;
     }
     if (isDemoKeychain() || !LIVE_SPONSOR) {
@@ -32,10 +32,13 @@ export function SponsoredCalls() {
           '     — POST { account, calldata } to the backend’s /sponsor (or an approved-app proxy)',
           '  3. wait for the transaction, then read Target.count()',
           '',
-          'The in-app demo keychain does not register a session, and no sponsor URL is configured.',
-          'Set VITE_KEYCHAIN_URL and VITE_SPONSOR_URL (or VITE_API_URL) against a funded Sepolia deployment to send a real ping.',
+          'This GitHub Pages site is static: it cannot hold the private sponsor token that',
+          "kamui's apps/demo-dapp/server.ts injects as x-kamui-sponsor-token on /api/sponsor.",
+          'The hosted keychain itself has no public /sponsor (POST https://sepolia.kamui.page/sponsor returns 404).',
+          'To send a real ping, run a small backend (the demo-dapp server is the reference) with',
+          'SPONSOR_SERVER_TOKEN and point VITE_SPONSOR_URL at that proxy.',
           'Target contract: ' + TARGET,
-          SPONSOR_URL ? 'Sponsor URL: ' + SPONSOR_URL : 'No VITE_SPONSOR_URL.',
+          SPONSOR_URL ? 'Sponsor URL: ' + SPONSOR_URL : 'No VITE_SPONSOR_URL — sponsored send is labeled, not live.',
         ].join('\n'),
       );
       return;
@@ -63,11 +66,14 @@ export function SponsoredCalls() {
 
   return (
     <Section feature={feature}>
-      <Callout>
-        After a session is approved, the keychain is not involved again. The HTTP <code>sponsor</code> helper
-        posts to Kamui’s <code>/sponsor</code> gateway. The backend may use its development relayer or an
-        optional AVNU paymaster (Sepolia-only, not tested live). No paymaster credential is added to the
-        browser. Approved-app sponsorship uses a server-side token, never a public page.
+      <Callout tone="warn">
+        After a session is approved, the app signs with the session key and would POST{' '}
+        <code>execute_from_outside_v2</code> to a sponsor gateway. Kamui’s reference demo-dapp does that
+        through a <strong>local server</strong> that injects a private <code>SPONSOR_SERVER_TOKEN</code>.
+        A static GitHub Pages site cannot do that, and <code>https://sepolia.kamui.page/sponsor</code> is
+        not a public gateway (404). Connect and session display work here; one-off execute still goes
+        through the keychain (the keychain submits the transaction itself). This Ping button is labeled
+        and explains the missing server, unless you set <code>VITE_SPONSOR_URL</code> to your own proxy.
       </Callout>
       <Card title="Ping the Sepolia Target contract">
         <p>
@@ -79,7 +85,7 @@ export function SponsoredCalls() {
         </p>
         <div className="actions">
           <Button variant="primary" onClick={() => void ping()} disabled={busy}>
-            {busy ? 'Sending…' : 'Prepare / send a sponsored ping'}
+            {busy ? 'Sending…' : LIVE_SPONSOR && !isDemoKeychain() ? 'Send a sponsored ping' : 'Prepare a sponsored ping (needs a sponsor server)'}
           </Button>
         </div>
         <Output tone={tone}>{log}</Output>
