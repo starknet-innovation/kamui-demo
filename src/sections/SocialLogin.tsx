@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { authUrl, beginLogin, keyProof, loginNonce, newKeyPair } from '@kamui/sdk';
 import { FEATURES } from '../lib/features';
-import { GOOGLE_CLIENT_ID, LIVE_LOGIN } from '../lib/config';
+import { GOOGLE_CLIENT_ID } from '../lib/config';
 import { Button, Callout, Card, Output, Section, Steps } from '../components/ui';
 
 const feature = FEATURES.find((f) => f.id === 'social-login')!;
@@ -45,9 +45,7 @@ export function SocialLogin() {
         'authUrl (Google):',
         href,
         '',
-        LIVE_LOGIN
-          ? 'Live login is configured. A real sign-in would now redirect to Google and finish through the pepper service and recover API.'
-          : 'Live login is not configured. The URL above is a real Google OAuth URL with a placeholder client id — opening it will be refused by Google. Set VITE_GOOGLE_CLIENT_ID, VITE_PEPPER_URL and VITE_API_URL to enable a live run.',
+        'This is an SDK playground only. The attempt and device key are not persisted for a callback, and the redirect is a localhost URI. A complete Google sign-in is not wired in this demo.',
       ].join('\n'),
     );
   }
@@ -72,13 +70,7 @@ export function SocialLogin() {
         <Output>{log}</Output>
         {url ? (
           <p style={{ marginTop: 10, fontSize: 13, color: 'var(--mute)' }}>
-            Issuer host: <code>{new URL(url).host}</code>
-            {LIVE_LOGIN ? (
-              <>
-                {' '}
-                — <a href={url}>open Google sign-in</a> (will leave this page)
-              </>
-            ) : null}
+            Issuer host: <code>{new URL(url).host}</code>. The URL is shown so you can inspect the nonce and state; it is not a working sign-in from this page.
           </p>
         ) : null}
       </Card>

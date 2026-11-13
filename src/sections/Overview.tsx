@@ -1,5 +1,5 @@
 import { FEATURES } from '../lib/features';
-import { CLASS_HASH, REGISTRY_ADDRESS, RPC_URL, LIVE_KEYCHAIN, LIVE_LOGIN, KAMUI_COMMIT } from '../lib/config';
+import { CLASS_HASH, REGISTRY_ADDRESS, RPC_URL, LIVE_KEYCHAIN, KAMUI_COMMIT } from '../lib/config';
 import { Callout, Card, Section } from '../components/ui';
 
 const feature = FEATURES[0]!;
@@ -41,7 +41,7 @@ export function Overview() {
         </Card>
         <Card title="Live services">
           <p>Hosted keychain: {LIVE_KEYCHAIN ? 'configured' : 'not configured — using the in-app demo keychain'}.</p>
-          <p>Live Google login: {LIVE_LOGIN ? 'configured' : 'not configured (needs a client id, pepper service and API)'}.</p>
+          <p>Google login: explainer only. This demo does not persist a login attempt or handle a callback, so it will not complete a real sign-in.</p>
         </Card>
         <Card title="Not Argent or Braavos">
           <p>

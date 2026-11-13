@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { Children, cloneElement, isValidElement, useId, type ReactElement, type ReactNode } from 'react';
 import type { Badge, Feature } from '../lib/features';
 
 export function Seal({ size = 36 }: { size?: number }) {
@@ -66,10 +66,16 @@ export function Field({
   label: string;
   children: ReactNode;
 }) {
+  const id = useId();
+  const labelled = Children.map(children, (child) => {
+    if (!isValidElement(child)) return child;
+    const el = child as ReactElement<{ id?: string }>;
+    return el.props.id ? child : cloneElement(el, { id });
+  });
   return (
     <div className="field">
-      <label>{label}</label>
-      {children}
+      <label htmlFor={id}>{label}</label>
+      {labelled}
     </div>
   );
 }

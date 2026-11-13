@@ -1,4 +1,9 @@
 /** Public Sepolia values and optional live-service endpoints. Nothing here is a secret. */
+import { resolveSponsorUrl } from './parse';
+
+/** Simulated account returned by the in-app demo keychain. */
+export const DEMO_ACCOUNT = '0xde0000000000000000000000000000000000000000000000000000000000001';
+
 
 export const SN_SEPOLIA = '0x534e5f5345504f4c4941';
 
@@ -28,11 +33,14 @@ export const KEYCHAIN_URL = (import.meta.env.VITE_KEYCHAIN_URL as string | undef
 export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
 export const PEPPER_URL = (import.meta.env.VITE_PEPPER_URL as string | undefined) ?? '';
 export const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? '';
-export const SPONSOR_URL = (import.meta.env.VITE_SPONSOR_URL as string | undefined) ?? '';
+/** Explicit gateway, or `{API_URL}/sponsor` when only the API is configured. */
+export const SPONSOR_URL = resolveSponsorUrl(
+  (import.meta.env.VITE_SPONSOR_URL as string | undefined) ?? '',
+  API_URL,
+);
 
 export const LIVE_KEYCHAIN = KEYCHAIN_URL.length > 0;
-export const LIVE_LOGIN = Boolean(GOOGLE_CLIENT_ID && PEPPER_URL && API_URL && CLASS_HASH);
-export const LIVE_SPONSOR = Boolean(SPONSOR_URL || API_URL);
+export const LIVE_SPONSOR = SPONSOR_URL.length > 0;
 
 export const APP_NAME = 'Kamui demo';
 

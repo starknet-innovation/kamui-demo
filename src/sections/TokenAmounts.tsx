@@ -3,6 +3,7 @@ import { describeAmount, formatTokenAmount, isUnlimitedAmount, readTokenInfo, KN
 import { RpcProvider } from 'starknet';
 import { FEATURES } from '../lib/features';
 import { ETH, RPC_URL, STRK, TARGET } from '../lib/config';
+import { parseNonNegativeInt } from '../lib/parse';
 import { Button, Callout, Card, Field, Output, Section } from '../components/ui';
 
 const feature = FEATURES.find((f) => f.id === 'tokens')!;
@@ -18,7 +19,15 @@ export function TokenAmounts() {
   const [busy, setBusy] = useState(false);
 
   function format() {
-    const amount = BigInt(raw);
+    let amount: bigint;
+    try {
+      amount = parseNonNegativeInt(raw, 'amount');
+    } catch (error) {
+      setTone('bad');
+      setOut((error as Error).message);
+      return;
+    }
+    try {
     const lines = [
       'formatTokenAmount(' + raw + ', 18) = ' + formatTokenAmount(amount, 18),
       'isUnlimitedAmount: ' + String(isUnlimitedAmount(amount)),
@@ -32,6 +41,10 @@ export function TokenAmounts() {
     ];
     setTone('ok');
     setOut(lines.join('\n'));
+    } catch (error) {
+      setTone('bad');
+      setOut((error as Error).message);
+    }
   }
 
   async function lookup(address: string) {

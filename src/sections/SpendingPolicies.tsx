@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { SPENDING_ENTRYPOINTS, unlimitedTokenCalls, type ScopedCall, type SpendingLimit } from '@kamui/sdk';
 import { FEATURES } from '../lib/features';
 import { STRK, TARGET } from '../lib/config';
+import { parseNonNegativeInt, parsePositiveNumber } from '../lib/parse';
 import { Button, Callout, Card, Field, Output, Section } from '../components/ui';
 
 const feature = FEATURES.find((f) => f.id === 'spending')!;
@@ -17,8 +18,30 @@ export function SpendingPolicies() {
   const [maxPerWindow, setMaxPerWindow] = useState('1500000000000000000');
   const [windowSeconds, setWindowSeconds] = useState(3600);
   const [out, setOut] = useState('Add a transfer or approve, then add a policy — or see the refusal.');
+  const [tone, setTone] = useState<'ok' | 'bad' | undefined>();
+
+  function addPolicy() {
+    try {
+      const next: SpendingLimit = {
+        token,
+        maxPerCall: parseNonNegativeInt(maxPerCall, 'maxPerCall'),
+        maxPerWindow: parseNonNegativeInt(maxPerWindow, 'maxPerWindow'),
+        windowSeconds: parsePositiveNumber(windowSeconds, 'windowSeconds'),
+      };
+      if (next.maxPerWindow === 0n) throw new Error('maxPerWindow: must be above zero');
+      setLimits((ls) => [...ls, next]);
+      setTone('ok');
+      setOut(
+        `Added a policy for ${token}: ${next.maxPerCall} per call, ${next.maxPerWindow} per ${next.windowSeconds}s.`,
+      );
+    } catch (error) {
+      setTone('bad');
+      setOut((error as Error).message);
+    }
+  }
 
   function check() {
+    setTone(undefined);
     const open = unlimitedTokenCalls({ kind: 'contracts', calls }, limits);
     if (open.length) {
       setOut(
@@ -90,14 +113,7 @@ export function SpendingPolicies() {
           </Field>
         </div>
         <div className="actions">
-          <Button
-            onClick={() =>
-              setLimits((ls) => [
-                ...ls,
-                { token, maxPerCall: BigInt(maxPerCall), maxPerWindow: BigInt(maxPerWindow), windowSeconds },
-              ])
-            }
-          >
+          <Button onClick={addPolicy}>
             Add spending policy
           </Button>
           <Button onClick={() => setLimits([])}>Clear policies</Button>
@@ -105,7 +121,7 @@ export function SpendingPolicies() {
             Run unlimitedTokenCalls
           </Button>
         </div>
-        <Output>{out}</Output>
+        <Output tone={tone}>{out}</Output>
       </Card>
     </Section>
   );

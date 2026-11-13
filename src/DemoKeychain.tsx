@@ -11,11 +11,10 @@ import {
 } from '@kamui/sdk';
 import { describeAmount, readTokenInfo } from '@kamui/sdk';
 import { RpcProvider } from 'starknet';
-import { CLASS_HASH, RPC_URL, SN_SEPOLIA } from './lib/config';
+import { CLASS_HASH, DEMO_ACCOUNT, RPC_URL, SN_SEPOLIA } from './lib/config';
 import { Button, Callout, Output, Seal } from './components/ui';
 
-/** A recognisable simulated account: clearly not a live approval. */
-const DEMO_ACCOUNT = '0xde0000000000000000000000000000000000000000000000000000000000001';
+/** A recognisable simulated transaction hash: clearly not a live submission. */
 const DEMO_TX = '0x111111111111111111111111111111111111111111111111111111111111111';
 
 type Kind = 'connect' | 'execute';
@@ -162,11 +161,16 @@ export function DemoKeychain({ kind }: { kind: Kind }) {
           {execute ? (
             <>
               <h3>Calls (full authority)</h3>
-              <p>This uses the account’s full authority, for one transaction only.</p>
+              <p>This uses the account’s full authority, for one transaction only. Each call is shown as a readable summary and as the raw target, entrypoint and calldata.</p>
               <ul className="scope-list">
-                {descriptions.map((line, i) => (
-                  <li key={i}>
-                    <span>{line}</span>
+                {execute.calls.map((call, i) => (
+                  <li key={i} className="call-item">
+                    <div>
+                      <strong>{descriptions[i] ?? `${call.entrypoint}() on ${call.to}`}</strong>
+                      <pre className="call-raw">
+                        {`${call.entrypoint} @ ${call.to}\ncalldata: ${call.calldata.length ? call.calldata.join(', ') : '(none)'}`}
+                      </pre>
+                    </div>
                   </li>
                 ))}
               </ul>

@@ -301,3 +301,20 @@ table.data td.mono { font-family: var(--mono); font-size: 12.5px; word-break: br
 .feature-index span { color: var(--mute); font-size: 13.5px; }
 
 .legal { color: var(--mute); font-size: 13px; margin-top: 48px; }
+
+.call-item { display: block; padding: 10px 0; }
+.call-item strong { display: block; font-weight: 650; }
+.call-raw {
+  display: block;
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--paper-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

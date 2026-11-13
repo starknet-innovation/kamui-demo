@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Nav } from './components/Nav';
 import { Seal } from './components/ui';
 import { FEATURES } from './lib/features';
-import { KAMUI_COMMIT, LIVE_KEYCHAIN, LIVE_LOGIN, RPC_URL } from './lib/config';
+import { KAMUI_COMMIT, LIVE_KEYCHAIN, RPC_URL } from './lib/config';
 import { DemoKeychain } from './DemoKeychain';
 import {
   Overview,
@@ -73,9 +73,7 @@ export function App() {
             <span className={`chip ${LIVE_KEYCHAIN ? 'ok' : ''}`}>
               {LIVE_KEYCHAIN ? 'Hosted keychain' : 'Demo keychain'}
             </span>
-            <span className={`chip ${LIVE_LOGIN ? 'ok' : ''}`}>
-              {LIVE_LOGIN ? 'Live login configured' : 'Login explainer'}
-            </span>
+            <span className="chip">Login explainer</span>
             <span className="chip">RPC {new URL(RPC_URL).host}</span>
           </div>
         </header>

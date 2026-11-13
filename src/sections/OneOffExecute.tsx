@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { beginExecute, describeCall, executeProblems, type WireCall } from '@kamui/sdk';
+import { beginExecute, describeCall, executeProblems, loadConnection, type WireCall } from '@kamui/sdk';
 import { uint256 } from 'starknet';
 import { FEATURES } from '../lib/features';
-import { APP_NAME, STRK, TARGET, activeKeychainUrl, isDemoKeychain } from '../lib/config';
+import { APP_NAME, DEMO_ACCOUNT, LIVE_KEYCHAIN, STRK, TARGET, activeKeychainUrl, isDemoKeychain } from '../lib/config';
 import { Button, Callout, Card, Output, Section } from '../components/ui';
 
 const feature = FEATURES.find((f) => f.id === 'execute')!;
@@ -35,7 +35,9 @@ function describe(calls: WireCall[], account: string): string {
 
 export function OneOffExecute() {
   const [out, setOut] = useState('Inspect a one-off approval, or send it to the (demo) keychain.');
-  const account = '0x1';
+  // Same identity the demo keychain uses in executeProblems, or the connected account for a hosted keychain.
+  const account =
+    (LIVE_KEYCHAIN && typeof sessionStorage !== 'undefined' && loadConnection(sessionStorage)?.account) || DEMO_ACCOUNT;
 
   const approveCalls = [
     { contractAddress: STRK, entrypoint: 'approve', calldata: [TARGET, ...amount(1_500_000_000_000_000_000n)] },

@@ -42,6 +42,7 @@ export function SessionScopes() {
   }
 
   function validate() {
+    try {
     const validUntil = Math.floor(Date.now() / 1000) + hours * 3600;
     const session = wire(account, calls, maxCalls, fee, validUntil);
     const problems = sessionProblems(account, session);
@@ -74,6 +75,10 @@ export function SessionScopes() {
           'A scope of kind “any” or “entrypoints on any contract” is valid in SNIP-41 but the keychain prefers named contracts. Kind “any” also fails the spending-limit check.',
         ].join('\n'),
       );
+    }
+    } catch (error) {
+      setTone('bad');
+      setOut((error as Error).message);
     }
   }
 
