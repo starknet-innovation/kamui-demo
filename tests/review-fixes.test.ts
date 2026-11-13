@@ -156,6 +156,21 @@ describe('resolveViteBase', () => {
     expect(resolveViteBase('/')).toBe('/');
   });
 
+  it('uses /kamui-demo/ when GITHUB_PAGES=1 and VITE_BASE_PATH is unset', () => {
+    expect(resolveViteBase(undefined, '1')).toBe('/kamui-demo/');
+    expect(resolveViteBase('', '1')).toBe('/kamui-demo/');
+    expect(resolveViteBase('   ', '1')).toBe('/kamui-demo/');
+    expect(resolveViteBase(undefined, ' 1 ')).toBe('/kamui-demo/');
+    expect(resolveViteBase(undefined, 'true')).toBe('/');
+    expect(resolveViteBase(undefined, '')).toBe('/');
+  });
+
+  it('lets an explicit VITE_BASE_PATH take precedence over GITHUB_PAGES', () => {
+    expect(resolveViteBase('/', '1')).toBe('/');
+    expect(resolveViteBase('/other', '1')).toBe('/other/');
+    expect(resolveViteBase('/kamui-demo', '1')).toBe('/kamui-demo/');
+  });
+
   it('normalises a project-site path from configure-pages to a trailing slash', () => {
     expect(resolveViteBase('/kamui-demo')).toBe('/kamui-demo/');
     expect(resolveViteBase('/kamui-demo/')).toBe('/kamui-demo/');
