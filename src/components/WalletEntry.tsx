@@ -88,7 +88,7 @@ function formatExpiry(validUntil: number): string {
 
 /** Prominent connect entry: button, or the connected account and session. */
 export function WalletEntry({ variant = 'hero' }: { variant?: 'hero' | 'section' | 'nav' }) {
-  const { connection, message, tone, preferDemo, setPreferDemo, start, disconnect, error } = useWallet();
+  const { connection, message, tone, preferDemo, start, disconnect, error } = useWallet();
   const demo = isDemoKeychain(preferDemo);
 
   if (connection) {
@@ -133,44 +133,19 @@ export function WalletEntry({ variant = 'hero' }: { variant?: 'hero' | 'section'
   if (variant === 'nav') {
     return (
       <button type="button" className="btn primary nav-wallet-btn" onClick={start}>
-        Connect with Kamui
+        Sign in with Google
       </button>
     );
   }
 
   return (
     <div className={`wallet-entry wallet-entry-${variant}`}>
-      {variant === 'hero' ? (
-        <p className="wallet-entry-lead">
-          Connect through the Kamui keychain. You sign in with Google on{' '}
-          <code>{demo ? 'the in-app demo keychain' : DEFAULT_KEYCHAIN_URL}</code>
-          {demo
-            ? ' (simulated — no Google, no on-chain session).'
-            : ', which handles Google sign-in, pepper and recovery, then returns a scoped session to this app.'}
-        </p>
-      ) : null}
       <div className="actions">
         <Button variant="primary" onClick={start}>
-          Connect with Kamui (Google)
+          Sign in with Google
         </Button>
       </div>
-      {variant === 'hero' ? (
-        <>
-          <p className="wallet-entry-note">
-            {LIVE_SPONSOR
-              ? ''
-              : 'Sponsored pings need a server-side sponsor token this GitHub Pages site cannot hold. After you connect, one-off execute still goes through the real keychain.'}
-          </p>
-          <label className="wallet-demo-toggle">
-            <input
-              type="checkbox"
-              checked={preferDemo}
-              onChange={(e) => setPreferDemo(e.target.checked)}
-            />
-            Use the in-app demo keychain instead (simulated approval, no on-chain session)
-          </label>
-        </>
-      ) : null}
+      {variant === 'hero' ? <p className="wallet-entry-sub">Connect with Kamui</p> : null}
       {message ? <p className={`wallet-status-msg ${tone}`}>{message}</p> : null}
       {error ? <p className="wallet-entry-error">{error}</p> : null}
     </div>

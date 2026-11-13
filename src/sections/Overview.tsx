@@ -23,10 +23,10 @@ export function Overview() {
         </Card>
         <Card title="What this demo is">
           <p>
-            Every user-facing feature of the Kamui SDK and keychain protocol has a section below, with a short
-            explanation and an interactive playground that runs the real SDK in the browser. Two sections also
-            read Starknet Sepolia. Connect uses the hosted keychain at <code>https://sepolia.kamui.page</code>
-            by default; a header toggle falls back to the in-app demo keychain (simulated approval only).
+            After you sign in, the wallet at the top of this page is the product: balances, send, and
+            contract calls against Starknet Sepolia. The sections below are a tour of the SDK. Connect uses
+            the hosted keychain at <code>https://sepolia.kamui.page</code> by default; a toggle under How it
+            works falls back to the in-app demo keychain (simulated approval only).
           </p>
         </Card>
       </div>
