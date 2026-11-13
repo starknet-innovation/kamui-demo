@@ -84,14 +84,34 @@ exercised end-to-end against Sepolia from this frontend alone:
 
 ## Deployment
 
-The GitHub Actions workflows are in [`.github/workflows/`](.github/workflows/).
+The GitHub Actions workflows are in [`.github/workflows/`](.github/workflows/). Pages is
+enabled with **Source** set to **GitHub Actions**, and deploys from `main`.
 
-After this is merged to `main`:
+This repository is **internal**, so GitHub serves the site privately at the root of a
+unique `*.pages.github.io` host, currently
+[https://legendary-adventure-2my9wyv.pages.github.io/](https://legendary-adventure-2my9wyv.pages.github.io/).
+Only members of the `starknet-innovation` organisation can see it.
 
-1. In the repository **Settings → Pages**, set **Source** to **GitHub Actions**.
-2. The site will be at `https://starknet-innovation.github.io/kamui-demo/`.
-3. This repository is currently **internal**, so only members of the `starknet-innovation`
-   organisation will see the Pages site unless the repository is made public.
+The Vite `base` path is taken from the `VITE_BASE_PATH` environment variable and defaults
+to `/`, which matches that private-root URL (and local dev). Keychain redirects and the
+SPA `404.html` fallback use Vite’s `import.meta.env.BASE_URL`, so they follow the same
+value.
+
+If the repository is made public, GitHub typically serves project Pages at
+`https://starknet-innovation.github.io/kamui-demo/`. To pick the correct base up
+automatically, the Pages workflow should pass `actions/configure-pages`’s `base_path`
+into the build:
+
+```yaml
+- id: pages
+  uses: actions/configure-pages@v5
+- run: bun run build
+  env:
+    VITE_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+```
+
+Replace the current `GITHUB_PAGES=1 bun run build` step with that. Until then, the
+default `/` is the right base for the private site.
 
 No secrets are required for the static deploy. Enabling live login, a hosted keychain, or
 sponsored transactions later means setting the public `VITE_*` values at build time (never
