@@ -1,19 +1,28 @@
 # Kamui demo
 
-An interactive dapp that demonstrates every user-facing feature of
-[Kamui](https://github.com/starknet-innovation/kamui), the Starknet embedded wallet: social
-login, a pepper recovery file, deterministic accounts, the keychain protocol, SNIP-41 sessions
-and spending policies, sponsored and self-paid calls, owners, the session registry, revocation,
-the account reader, SNIP-9 outside execution, client-side proving, and the security model.
+A public demo of [Kamui](https://github.com/starknet-innovation/kamui), the Starknet embedded
+wallet. The point is what you can do **once you are signed in with Google**: you have a wallet,
+you can send funds, and you can interact with contracts on Starknet Sepolia.
 
-Each section has a short explanation and a playground that runs the **real Kamui SDK** in the
-browser. Two sections also read Starknet Sepolia (token metadata and `KamuiReader`).
-
-**Connect with Kamui (Google)** in the header sends you to the hosted keychain at
+**Sign in with Google** (Connect with Kamui) sends you to the hosted keychain at
 `https://sepolia.kamui.page` (`beginConnect` / `finishConnect`). Google sign-in, pepper and
-recovery happen on that site; this demo receives a scoped session key and shows the connected
-account. An in-app **demo keychain** is available as a fallback toggle (real protocol checks,
-simulated approval, no on-chain session).
+recovery happen on that site. This demo then shows a wallet dashboard: account address (copy,
+Voyager, Starkscan), whether it is deployed, STRK and ETH balances, a faucet link when both
+are zero, a send form, contract calls (approve, ping the demo Target, a generic write, and
+read-only calls), and an activity list for transactions sent in this tab.
+
+Writes go through the keychain’s one-off **execute** path (`beginExecute` / `finishExecute`),
+which a static GitHub Pages site can use — the keychain submits the transaction. A self-paid
+session send (`createSessionAccount`, fee cap 0.01 STRK) is offered when the account is
+deployed and has STRK. Sponsored session calls are labeled, not live: they need a server-side
+sponsor token this site cannot hold.
+
+The session requested at connect covers `transfer` and `approve` on Sepolia STRK and ETH
+(with spending limits) plus `ping` on the demo Target. An in-app **demo keychain** is a
+fallback toggle under How it works (simulated approval only).
+
+Below the dashboard, **How it works** still has a playground for every user-facing Kamui
+feature, running the real SDK in the browser.
 
 This is a Sepolia demo. Kamui is **not audited**. Do not hold real funds.
 
@@ -53,6 +62,7 @@ source-only, matching the upstream package.
 | Social login | [Social login](#social-login) | Explainer of what the hosted keychain does after Connect: Google sign-in, pepper and recovery stay on `sepolia.kamui.page`. This demo never receives a Google token |
 | Pepper recovery file | [Pepper file](#pepper) | `exportPepper`, `serializePepperFile`, `parsePepperFile`, `pepperFileMatchesLogin`, `pepperFromFile` |
 | Deterministic address | [Account address](#address) | `identity`, `accountAddress`, `accountAddressFromLogin`, `constructorCalldata`, `NO_PEPPER` |
+| Wallet dashboard (after sign-in) | top of the page | Account, balances, send STRK/ETH, approve, ping, generic and read-only calls, activity. Writes use `beginExecute`. |
 | Keychain connect | [Keychain connect](#keychain) | `beginConnect` / `finishConnect` against `https://sepolia.kamui.page` by default; in-app demo keychain as a fallback toggle |
 | Session scopes | [Session scopes](#sessions) | Scope builder run through `assertValidSession` and `sessionProblems`; blocked entry points |
 | Spending policies | [Spending policies](#spending) | `unlimitedTokenCalls` and SNIP-41 Part H limits |

@@ -1,6 +1,7 @@
 /** App-side helpers to start and finish a Kamui keychain connection. */
 import {
   beginConnect,
+  beginExecute,
   finishConnect,
   finishExecute,
   forgetConnection,
@@ -8,18 +9,47 @@ import {
   pendingRequestKind,
   type Connection,
 } from '@kamui/sdk';
-import { APP_NAME, TARGET, activeKeychainUrl, connectRedirectUri, isDemoKeychain } from './config';
+import type { Call } from 'starknet';
+import { APP_NAME, activeKeychainUrl, connectRedirectUri, isDemoKeychain } from './config';
+import {
+  SESSION_CALLS,
+  SESSION_LIMITS,
+  SESSION_MAX_CALLS,
+  SESSION_MAX_FEE_PER_TX,
+  SESSION_TTL_SECONDS,
+  clearActivity,
+  recordActivity,
+  rememberPendingExecute,
+  takePendingExecute,
+  type PendingExecute,
+} from './wallet';
 
-/** Create a ping()-scoped session and return the keychain URL to assign. */
+/** Create a session (STRK/ETH transfer+approve, Target.ping, spending limits, self-pay fee cap) and return the keychain URL. */
 export function startKamuiConnect(preferDemo = isDemoKeychain()): string {
   return beginConnect(
     {
       keychainUrl: activeKeychainUrl(preferDemo),
       redirectUri: connectRedirectUri(),
       appName: APP_NAME,
-      validUntil: Math.floor(Date.now() / 1000) + 2 * 3600,
-      maxCalls: 20,
-      calls: [{ to: TARGET, entrypoint: 'ping' }],
+      validUntil: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
+      maxCalls: SESSION_MAX_CALLS,
+      maxFeePerTx: SESSION_MAX_FEE_PER_TX,
+      calls: SESSION_CALLS,
+      limits: SESSION_LIMITS,
+    },
+    sessionStorage,
+  );
+}
+
+/** Send the user to the keychain to approve and submit one transaction. Works on a static site. */
+export function startKamuiExecute(calls: Call[], meta: PendingExecute, preferDemo = isDemoKeychain()): string {
+  rememberPendingExecute(meta);
+  return beginExecute(
+    {
+      keychainUrl: activeKeychainUrl(preferDemo),
+      redirectUri: connectRedirectUri(),
+      appName: APP_NAME,
+      calls,
     },
     sessionStorage,
   );
@@ -63,18 +93,35 @@ function readKeychainReturn(store: Storage, hash: string, hadKamui: boolean): Re
       try {
         const sent = finishExecute(hash, store);
         clearFragment();
+        if (sent) {
+          const meta = takePendingExecute(store);
+          recordActivity(
+            {
+              hash: sent.transactionHash,
+              kind: meta?.kind ?? 'custom',
+              label: meta?.label ?? 'Keychain execute',
+              at: Date.now(),
+              status: 'pending',
+              simulated: isDemoKeychain(),
+            },
+            store,
+          );
+        } else {
+          takePendingExecute(store);
+        }
         return {
           connection: loadConnection(store),
           message: sent
-            ? 'The keychain approved a one-off call: ' + sent.transactionHash
+            ? 'The keychain submitted the transaction: ' + sent.transactionHash
             : 'Returned from the keychain with no execute answer.',
           tone: sent ? 'ok' : 'info',
         };
       } catch (error) {
         clearFragment();
+        takePendingExecute(store);
         return {
           connection: loadConnection(store),
-          message: 'One-off call not sent: ' + (error as Error).message,
+          message: 'Transaction not sent: ' + (error as Error).message,
           tone: 'bad',
         };
       }
@@ -115,4 +162,5 @@ function clearFragment() {
 
 export function disconnectKamui(store: Storage = sessionStorage): void {
   forgetConnection(store);
+  clearActivity(store);
 }
