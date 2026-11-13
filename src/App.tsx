@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Nav } from './components/Nav';
 import { Seal } from './components/ui';
 import { FEATURES } from './lib/features';
-import { KAMUI_COMMIT, LIVE_KEYCHAIN, RPC_URL } from './lib/config';
+import { KAMUI_COMMIT, LIVE_KEYCHAIN, LIVE_GOOGLE, RPC_URL, isLoginCallbackPath } from './lib/config';
 import { DemoKeychain } from './DemoKeychain';
+import { LoginCallback } from './sections/LoginCallback';
 import {
   Overview,
   SocialLogin,
@@ -48,6 +49,7 @@ export function App() {
     return () => window.removeEventListener('hashchange', onHash);
   }, []);
 
+  if (isLoginCallbackPath(window.location.pathname)) return <LoginCallback />;
   if (kind) return <DemoKeychain kind={kind} />;
 
   return (
@@ -73,7 +75,9 @@ export function App() {
             <span className={`chip ${LIVE_KEYCHAIN ? 'ok' : ''}`}>
               {LIVE_KEYCHAIN ? 'Hosted keychain' : 'Demo keychain'}
             </span>
-            <span className="chip">Login explainer</span>
+            <span className={`chip ${LIVE_GOOGLE ? 'ok' : ''}`}>
+              {LIVE_GOOGLE ? 'Google login' : 'Login explainer'}
+            </span>
             <span className="chip">RPC {new URL(RPC_URL).host}</span>
           </div>
         </header>

@@ -4,7 +4,6 @@ import { resolveSponsorUrl } from './parse';
 /** Simulated account returned by the in-app demo keychain. */
 export const DEMO_ACCOUNT = '0xde0000000000000000000000000000000000000000000000000000000000001';
 
-
 export const SN_SEPOLIA = '0x534e5f5345504f4c4941';
 
 /** Current Kamui account class, from kamui `services/backend/deployments.env`. */
@@ -31,8 +30,21 @@ export const RPC_URL =
 /** Empty unless a hosted Kamui keychain is configured at build time. */
 export const KEYCHAIN_URL = (import.meta.env.VITE_KEYCHAIN_URL as string | undefined) ?? '';
 export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
-export const PEPPER_URL = (import.meta.env.VITE_PEPPER_URL as string | undefined) ?? '';
-export const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? '';
+
+/**
+ * Live pepper service (`GET /health` returns ok). Requests from this demo's origin are
+ * currently refused (`ORIGIN_NOT_ALLOWED`). Override with `VITE_PEPPER_URL`, or set it
+ * to empty to skip the call.
+ */
+export const DEFAULT_PEPPER_URL = 'https://pepper-sepolia.kamui.page';
+export const PEPPER_URL = (import.meta.env.VITE_PEPPER_URL as string | undefined) ?? DEFAULT_PEPPER_URL;
+
+/** Public Google OAuth Web client ID (not a secret). `VITE_GOOGLE_CLIENT_ID` overrides when set and non-empty. */
+export const DEFAULT_GOOGLE_CLIENT_ID =
+  '612906135098-gclndmmib7jnn6hhj5p55akei3kjtbdv.apps.googleusercontent.com';
+export const GOOGLE_CLIENT_ID =
+  (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined)?.trim() || DEFAULT_GOOGLE_CLIENT_ID;
+
 /** Explicit gateway, or `{API_URL}/sponsor` when only the API is configured. */
 export const SPONSOR_URL = resolveSponsorUrl(
   (import.meta.env.VITE_SPONSOR_URL as string | undefined) ?? '',
@@ -41,6 +53,8 @@ export const SPONSOR_URL = resolveSponsorUrl(
 
 export const LIVE_KEYCHAIN = KEYCHAIN_URL.length > 0;
 export const LIVE_SPONSOR = SPONSOR_URL.length > 0;
+export const LIVE_PEPPER = PEPPER_URL.length > 0;
+export const LIVE_GOOGLE = GOOGLE_CLIENT_ID.length > 0;
 
 export const APP_NAME = 'Kamui demo';
 
@@ -55,6 +69,27 @@ export function activeKeychainUrl(): string {
 
 export function isDemoKeychain(): boolean {
   return !LIVE_KEYCHAIN;
+}
+
+/**
+ * Exact OAuth `redirect_uri` for Google. Must match the Cloud console entry:
+ *   `http://localhost:5175/callback`
+ *   `https://starknet-innovation.github.io/kamui-demo/callback`
+ *
+ * Vite's `BASE_URL` is `/` locally and `/kamui-demo/` on Pages (always with a trailing slash).
+ */
+export function loginRedirectUri(
+  origin: string = typeof window !== 'undefined' ? window.location.origin : '',
+  base: string = import.meta.env.BASE_URL,
+): string {
+  const prefix = base.endsWith('/') ? base : `${base}/`;
+  return `${origin}${prefix}callback`;
+}
+
+/** True for `/callback` and `/kamui-demo/callback` (with or without a trailing slash). */
+export function isLoginCallbackPath(pathname: string): boolean {
+  const path = pathname.replace(/\/+$/, '');
+  return path === '/callback' || path.endsWith('/callback');
 }
 
 export const KAMUI_COMMIT = 'a6e491c2a115ce5489ffbd6a45d93f3c1840afea';
