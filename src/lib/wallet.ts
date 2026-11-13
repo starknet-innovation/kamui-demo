@@ -2,7 +2,7 @@
 import { KamuiReader, formatTokenAmount, type Connection } from '@kamui/sdk';
 import { RpcProvider, uint256, type Call, type ProviderInterface } from 'starknet';
 import { ETH, RPC_URL, STRK, TARGET } from './config';
-import { parseFelt } from './parse';
+import { parseHexFelt } from './parse';
 
 export const FAUCET_URL = 'https://faucet.starknet.io/';
 export const VOYAGER_BASE = 'https://sepolia.voyager.online';
@@ -121,7 +121,7 @@ export function pingCall(): Call {
 /** Comma- or whitespace-separated felts for a custom call. */
 export function parseCalldata(text: string): string[] {
   const parts = text.trim() === '' ? [] : text.trim().split(/[\s,]+/).filter(Boolean);
-  return parts.map((part, i) => parseFelt(part, `calldata[${i}]`));
+  return parts.map((part, i) => parseHexFelt(part, `calldata[${i}]`));
 }
 
 export type WalletSnapshot = {

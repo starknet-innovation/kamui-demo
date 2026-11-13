@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach } from 'vitest';
 import { KNOWN_TOKENS, sessionProblems } from '@kamui/sdk';
 import { DEMO_ACCOUNT, ETH, STRK, TARGET } from '../src/lib/config';
+import { parseHexFelt } from '../src/lib/parse';
 import { startKamuiConnect, startKamuiExecute, consumeKeychainReturn, resetKeychainReturnCache } from '../src/lib/connect';
 import { toFragment } from '@kamui/sdk';
 import {
@@ -83,6 +84,7 @@ describe('formatBalance and calldata', () => {
   it('parses calldata felts', () => {
     expect(parseCalldata('')).toEqual([]);
     expect(parseCalldata('0x1, 0x2 0x3')).toEqual(['0x1', '0x2', '0x3']);
+    expect(parseCalldata('123')).toEqual(['0x7b']);
     expect(() => parseCalldata('zzz')).toThrow(/calldata/);
   });
 });
@@ -221,5 +223,21 @@ describe('isValidFelt', () => {
     expect(snap.demo).toBe(true);
     expect(snap.deployed).toBe(false);
     expect(snap.strk).toBe(0n);
+  });
+});
+
+
+describe('parseHexFelt', () => {
+  it('normalises decimal and hex input to 0x-prefixed lowercase hex', () => {
+    expect(parseHexFelt('123', 'contract')).toBe('0x7b');
+    expect(parseHexFelt('0x7b', 'contract')).toBe('0x7b');
+    expect(parseHexFelt('0x7B', 'contract')).toBe('0x7b');
+    expect(parseHexFelt('0', 'contract')).toBe('0x0');
+  });
+
+  it('rejects empty, junk, and values at or above the Stark prime', () => {
+    expect(() => parseHexFelt('', 'contract')).toThrow(/empty/);
+    expect(() => parseHexFelt('xyz', 'contract')).toThrow(/not an integer/);
+    expect(() => parseHexFelt(DEMO_ACCOUNT, 'contract')).toThrow(/felt range/);
   });
 });

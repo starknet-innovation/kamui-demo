@@ -21,6 +21,19 @@ export function parseFelt(text: string, field: string): string {
   return trimmed;
 }
 
+/** Stark field prime. Calldata and keychain addresses must be strictly less than this. */
+export const FELT_PRIME = 0x800000000000011000000000000000000000000000000000000000000000001n;
+
+/**
+ * A felt normalised to `0x` + lowercase hex, as `parseExecuteRequest` requires.
+ * Accepts decimal or hex input (`123` and `0x7b` both become `0x7b`).
+ */
+export function parseHexFelt(text: string, field: string): string {
+  const value = parseNonNegativeInt(text, field);
+  if (value >= FELT_PRIME) throw new Error(`${field}: out of felt range`);
+  return '0x' + value.toString(16);
+}
+
 /** A positive JavaScript integer (for window lengths, maxCalls, and similar). */
 export function parsePositiveNumber(value: string | number, field: string): number {
   const n = typeof value === 'number' ? value : Number(String(value).trim());

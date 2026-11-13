@@ -29,7 +29,7 @@ import {
   type WalletSnapshot,
 } from '../lib/wallet';
 import { startKamuiExecute } from '../lib/connect';
-import { parseFelt } from '../lib/parse';
+import { parseHexFelt } from '../lib/parse';
 import { Button, Card, Field, Output } from './ui';
 import { useWallet } from './WalletEntry';
 
@@ -233,7 +233,7 @@ function SendPanel({
   const [localLog, setLocalLog] = useState('');
 
   function buildCall() {
-    const to = parseFelt(recipient, 'recipient');
+    const to = parseHexFelt(recipient, 'recipient');
     const raw = parseHumanAmount(amount, TOKENS[token].decimals);
     if (raw === 0n) throw new Error('amount: must be greater than zero');
     return { call: transferCall(tokenAddress(token), to, raw), raw, to };
@@ -374,12 +374,11 @@ function InteractPanel({
   function submitApprove() {
     setApproveError('');
     try {
-      const who = parseFelt(spender, 'spender');
+      const who = parseHexFelt(spender, 'spender');
       const raw = parseHumanAmount(allowance);
-      if (raw === 0n) throw new Error('amount: must be greater than zero');
       onExecute([approveCall(tokenAddress(approveToken), who, raw)], {
         kind: 'approve',
-        label: `Approve ${formatBalance(raw)} ${approveToken}`,
+        label: raw === 0n ? `Revoke ${approveToken} allowance` : `Approve ${formatBalance(raw)} ${approveToken}`,
       });
     } catch (err) {
       setApproveError((err as Error).message);
@@ -389,7 +388,7 @@ function InteractPanel({
   function submitCustom() {
     setCallError('');
     try {
-      const to = parseFelt(callTo, 'contract');
+      const to = parseHexFelt(callTo, 'contract');
       const entrypoint = callEntry.trim();
       if (!/^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(entrypoint)) throw new Error('entrypoint: must be a Cairo name');
       const calldata = parseCalldata(callData);
@@ -406,7 +405,7 @@ function InteractPanel({
     setReading(true);
     setReadOut('');
     try {
-      const to = parseFelt(readTo, 'contract');
+      const to = parseHexFelt(readTo, 'contract');
       const entrypoint = readEntry.trim();
       if (!/^[A-Za-z_][A-Za-z0-9_]{0,63}$/.test(entrypoint)) throw new Error('entrypoint: must be a Cairo name');
       const calldata = parseCalldata(readData);
