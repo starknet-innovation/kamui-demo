@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Nav } from './components/Nav';
+import { WalletEntry, WalletProvider } from './components/WalletEntry';
 import { Seal } from './components/ui';
 import { FEATURES } from './lib/features';
-import { KAMUI_COMMIT, LIVE_KEYCHAIN, LIVE_GOOGLE, RPC_URL, isLoginCallbackPath } from './lib/config';
+import { KAMUI_COMMIT, LIVE_KEYCHAIN, LIVE_SPONSOR, RPC_URL, isLoginCallbackPath } from './lib/config';
 import { DemoKeychain } from './DemoKeychain';
 import { LoginCallback } from './sections/LoginCallback';
 import {
@@ -53,6 +54,7 @@ export function App() {
   if (kind) return <DemoKeychain kind={kind} />;
 
   return (
+    <WalletProvider>
     <div className="shell">
       <Nav current={current} />
       <main className="main">
@@ -67,6 +69,7 @@ export function App() {
             session keys, spending limits and sponsored calls. Each section runs the real TypeScript SDK in
             your browser. Two of them also read Starknet Sepolia.
           </p>
+          <WalletEntry variant="hero" />
           <div className="chips">
             <span className="chip seal">神 Kamui</span>
             <span className="chip">Starknet Sepolia</span>
@@ -75,8 +78,8 @@ export function App() {
             <span className={`chip ${LIVE_KEYCHAIN ? 'ok' : ''}`}>
               {LIVE_KEYCHAIN ? 'Hosted keychain' : 'Demo keychain'}
             </span>
-            <span className={`chip ${LIVE_GOOGLE ? 'ok' : ''}`}>
-              {LIVE_GOOGLE ? 'Google login' : 'Login explainer'}
+            <span className={`chip ${LIVE_SPONSOR ? 'ok' : 'warn'}`}>
+              {LIVE_SPONSOR ? 'Sponsor gateway' : 'Sponsored calls need a server'}
             </span>
             <span className="chip">RPC {new URL(RPC_URL).host}</span>
           </div>
@@ -110,5 +113,6 @@ export function App() {
         </p>
       </main>
     </div>
+    </WalletProvider>
   );
 }

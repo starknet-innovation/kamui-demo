@@ -21,7 +21,7 @@ export const FEATURES: Feature[] = [
     id: 'social-login',
     title: 'Social login',
     nav: 'Social login',
-    blurb: 'Real Google sign-in via beginLogin, authUrl and a /callback that runs parseLoginRedirect and keyProof. Pepper and completeLogin follow when those services allow this origin.',
+    blurb: 'Explainer of what the hosted keychain does after you click Connect with Kamui (Google): Google sign-in, pepper and recovery stay on sepolia.kamui.page. This demo never receives a Google token.',
     badges: ['sdk'],
   },
   {
@@ -42,8 +42,8 @@ export const FEATURES: Feature[] = [
     id: 'keychain',
     title: 'Keychain connect',
     nav: 'Keychain connect',
-    blurb: 'The app creates a session key and redirects to the keychain. The user approves a scoped session; the private session key never leaves the app.',
-    badges: ['sdk', 'sim'],
+    blurb: 'The app creates a session key and redirects to https://sepolia.kamui.page. The user approves a scoped session; the private session key never leaves the app. An in-app demo keychain is a fallback toggle.',
+    badges: ['sdk'],
   },
   {
     id: 'sessions',

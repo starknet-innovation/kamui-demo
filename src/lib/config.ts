@@ -27,9 +27,12 @@ export const RPC_URL =
   (import.meta.env.VITE_RPC_URL as string | undefined) ??
   'https://starknet-sepolia-rpc.publicnode.com';
 
-/** Empty unless a hosted Kamui keychain is configured at build time. */
-export const KEYCHAIN_URL = (import.meta.env.VITE_KEYCHAIN_URL as string | undefined) ?? '';
-export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
+/** Hosted Kamui keychain and API (same origin in the Sepolia deployment). Override with VITE_*; set either to empty to disable. */
+export const DEFAULT_KEYCHAIN_URL = 'https://sepolia.kamui.page';
+export const DEFAULT_API_URL = 'https://sepolia.kamui.page';
+export const KEYCHAIN_URL =
+  (import.meta.env.VITE_KEYCHAIN_URL as string | undefined)?.trim() ?? DEFAULT_KEYCHAIN_URL;
+export const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.trim() ?? DEFAULT_API_URL;
 
 /**
  * Live pepper service (`GET /health` returns ok). Requests from this demo's origin are
@@ -45,10 +48,15 @@ export const DEFAULT_GOOGLE_CLIENT_ID =
 export const GOOGLE_CLIENT_ID =
   (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined)?.trim() || DEFAULT_GOOGLE_CLIENT_ID;
 
-/** Explicit gateway, or `{API_URL}/sponsor` when only the API is configured. */
+/**
+ * Sponsor gateway. An explicit VITE_SPONSOR_URL wins. We do not fall back to
+ * `{API_URL}/sponsor` when API_URL is the hosted keychain itself: that host has
+ * no /sponsor, and a static Pages site cannot inject the private sponsor token
+ * that apps/demo-dapp's server.ts sends as x-kamui-sponsor-token.
+ */
 export const SPONSOR_URL = resolveSponsorUrl(
   (import.meta.env.VITE_SPONSOR_URL as string | undefined) ?? '',
-  API_URL,
+  API_URL === DEFAULT_API_URL ? '' : API_URL,
 );
 
 export const LIVE_KEYCHAIN = KEYCHAIN_URL.length > 0;
@@ -63,12 +71,44 @@ export function demoKeychainUrl(): string {
   return `${window.location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}/keychain`;
 }
 
-export function activeKeychainUrl(): string {
-  return LIVE_KEYCHAIN ? KEYCHAIN_URL.replace(/\/$/, '') : demoKeychainUrl();
+/** sessionStorage flag: use the in-app simulated keychain even when a hosted one is configured. */
+export const DEMO_KEYCHAIN_PREF = 'kamui-demo.preferDemoKeychain';
+
+export function preferDemoKeychain(store?: Storage): boolean {
+  try {
+    const s = store ?? (typeof sessionStorage !== 'undefined' ? sessionStorage : undefined);
+    return s?.getItem(DEMO_KEYCHAIN_PREF) === '1';
+  } catch {
+    return false;
+  }
 }
 
-export function isDemoKeychain(): boolean {
-  return !LIVE_KEYCHAIN;
+export function setPreferDemoKeychain(value: boolean, store: Storage = sessionStorage): void {
+  if (value) store.setItem(DEMO_KEYCHAIN_PREF, '1');
+  else store.removeItem(DEMO_KEYCHAIN_PREF);
+}
+
+export function activeKeychainUrl(preferDemo: boolean = preferDemoKeychain()): string {
+  if (preferDemo || !LIVE_KEYCHAIN) return demoKeychainUrl();
+  return KEYCHAIN_URL.replace(/\/$/, '');
+}
+
+export function isDemoKeychain(preferDemo: boolean = preferDemoKeychain()): boolean {
+  return preferDemo || !LIVE_KEYCHAIN;
+}
+
+/**
+ * Where the hosted keychain sends the user back after connect or execute.
+ * Must be https (or http://localhost), with no URL fragment — the SDK forbids one.
+ *   `http://localhost:5175/`
+ *   `https://starknet-innovation.github.io/kamui-demo/`
+ */
+export function connectRedirectUri(
+  origin: string = typeof window !== 'undefined' ? window.location.origin : '',
+  base: string = import.meta.env.BASE_URL,
+): string {
+  const prefix = base.endsWith('/') ? base : `${base}/`;
+  return `${origin}${prefix}`;
 }
 
 /**
