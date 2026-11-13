@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { executeProblems, sessionProblems, newKeyPair, unlimitedTokenCalls } from '@kamui/sdk';
 import { DEMO_ACCOUNT, STRK, TARGET } from '../src/lib/config';
 import { parseFelt, parseNonNegativeInt, parsePositiveNumber, resolveSponsorUrl } from '../src/lib/parse';
+import { resolveViteBase } from '../src/lib/basePath';
 import { resolveExecuteAccount } from '../src/lib/account';
 
 describe('parseNonNegativeInt (spending policy and token amounts)', () => {
@@ -143,5 +144,22 @@ describe('resolveExecuteAccount (fresh account on each action)', () => {
     ]);
     expect(problems).toEqual([]);
     expect(current).not.toBe(DEMO_ACCOUNT);
+  });
+});
+
+describe('resolveViteBase', () => {
+  it('defaults to the site root when unset or empty', () => {
+    expect(resolveViteBase(undefined)).toBe('/');
+    expect(resolveViteBase(null)).toBe('/');
+    expect(resolveViteBase('')).toBe('/');
+    expect(resolveViteBase('   ')).toBe('/');
+    expect(resolveViteBase('/')).toBe('/');
+  });
+
+  it('normalises a project-site path from configure-pages to a trailing slash', () => {
+    expect(resolveViteBase('/kamui-demo')).toBe('/kamui-demo/');
+    expect(resolveViteBase('/kamui-demo/')).toBe('/kamui-demo/');
+    expect(resolveViteBase('kamui-demo')).toBe('/kamui-demo/');
+    expect(resolveViteBase('  /kamui-demo  ')).toBe('/kamui-demo/');
   });
 });
